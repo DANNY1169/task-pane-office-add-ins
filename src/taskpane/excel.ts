@@ -124,14 +124,14 @@ async function runBuild(): Promise<void> {
 
         // Merge cells A1:F1
         try {
-          const titleRange = dashSheet.getRange("A1:F1");
+          const titleRange = dashSheet.getRange("A1:H1");
           titleRange.merge(true);
           await context.sync();
           console.log("[STEP 3a-1a] Title cells merged successfully");
         } catch (mergeError) {
           console.error("[STEP 3a-1a] Merge error:", (mergeError as Error).message);
           try {
-            const titleRange = dashSheet.getRange("A1:F1");
+            const titleRange = dashSheet.getRange("A1:H1");
             titleRange.merge();
             await context.sync();
             console.log("[STEP 3a-1a] Title cells merged (alternative method)");
@@ -153,14 +153,14 @@ async function runBuild(): Promise<void> {
 
         // Merge cells A3:F3
         try {
-          const instructionsRange = dashSheet.getRange("A3:F3");
+          const instructionsRange = dashSheet.getRange("A3:H3");
           instructionsRange.merge(true);
           await context.sync();
           console.log("[STEP 3a-1b] Instructions cells merged successfully");
         } catch (mergeError) {
           console.error("[STEP 3a-1b] Merge error:", (mergeError as Error).message);
           try {
-            const instructionsRange = dashSheet.getRange("A3:F3");
+            const instructionsRange = dashSheet.getRange("A3:H3");
             instructionsRange.merge();
             await context.sync();
             console.log("[STEP 3a-1b] Instructions cells merged (alternative method)");
@@ -179,37 +179,19 @@ async function runBuild(): Promise<void> {
 
         // Merge cells A5:F5
         try {
-          const summaryRange = dashSheet.getRange("A5:F5");
+          const summaryRange = dashSheet.getRange("A5:B5");
           summaryRange.merge(true);
           await context.sync();
           console.log("[STEP 3a-1c] Summary cells merged successfully");
         } catch (mergeError) {
           console.error("[STEP 3a-1c] Merge error:", (mergeError as Error).message);
           try {
-            const summaryRange = dashSheet.getRange("A5:F5");
+            const summaryRange = dashSheet.getRange("A5:B5");
             summaryRange.merge();
             await context.sync();
             console.log("[STEP 3a-1c] Summary cells merged (alternative method)");
           } catch (mergeError2) {
             console.error("[STEP 3a-1c] All merge attempts failed:", (mergeError2 as Error).message);
-          }
-        }
-
-        // Row 6: Empty row, but merge A6:F6 for consistency
-        try {
-          const row6Range = dashSheet.getRange("A6:F6");
-          row6Range.merge(true);
-          await context.sync();
-          console.log("[STEP 3a-1d] Row 6 cells merged successfully");
-        } catch (mergeError) {
-          console.error("[STEP 3a-1d] Row 6 merge error:", (mergeError as Error).message);
-          try {
-            const row6Range = dashSheet.getRange("A6:F6");
-            row6Range.merge();
-            await context.sync();
-            console.log("[STEP 3a-1d] Row 6 cells merged (alternative method)");
-          } catch (mergeError2) {
-            console.error("[STEP 3a-1d] Row 6 merge failed:", (mergeError2 as Error).message);
           }
         }
 
@@ -307,7 +289,10 @@ async function runBuild(): Promise<void> {
           await context.sync();
           showStatus("✓ Revenue formulas set using SUMPRODUCT", false);
         } catch (altError) {
-          showStatus(`[STEP 4a ERROR] Both approaches failed!\n\nOriginal Error: ${(error as Error).message}\n\nAlternative Error: ${(altError as Error).message}`, true);
+          showStatus(
+            `[STEP 4a ERROR] Both approaches failed!\n\nOriginal Error: ${(error as Error).message}\n\nAlternative Error: ${(altError as Error).message}`,
+            true
+          );
           throw altError;
         }
       }
@@ -552,30 +537,45 @@ async function runBuild(): Promise<void> {
           title: "Quarterly Margin Trends by Product",
           seriesNames: ["Widget Pro", "Widget Standard", "Service Package", "Accessory Kit", "Total Revenue"],
           seriesConfig: [
-            // Product series - all clustered columns on primary axis
+            // Widget Pro - dark blue column
             {
               chartType: Excel.ChartType.columnClustered,
               axisGroup: typeof Excel.ChartAxisGroup !== "undefined" ? Excel.ChartAxisGroup.primary : 0,
+              fillFormat: {
+                color: "#1F4E78", // Dark blue
+              },
             },
+            // Widget Standard - red column
             {
               chartType: Excel.ChartType.columnClustered,
               axisGroup: typeof Excel.ChartAxisGroup !== "undefined" ? Excel.ChartAxisGroup.primary : 0,
+              fillFormat: {
+                color: "#C00000", // Red
+              },
             },
+            // Service Package - green column
             {
               chartType: Excel.ChartType.columnClustered,
               axisGroup: typeof Excel.ChartAxisGroup !== "undefined" ? Excel.ChartAxisGroup.primary : 0,
+              fillFormat: {
+                color: "#70AD47", // Green
+              },
             },
+            // Accessory Kit - purple column
             {
               chartType: Excel.ChartType.columnClustered,
               axisGroup: typeof Excel.ChartAxisGroup !== "undefined" ? Excel.ChartAxisGroup.primary : 0,
+              fillFormat: {
+                color: "#7030A0", // Purple
+              },
             },
-            // Total Revenue - line on secondary axis
+            // Total Revenue - blue line on secondary axis
             {
               chartType: Excel.ChartType.line,
               axisGroup: 1,
               lineFormat: {
                 weight: 3,
-                color: "#FF0000", // Red
+                color: "#0070C0", // Blue
               },
             },
           ],
@@ -587,7 +587,7 @@ async function runBuild(): Promise<void> {
             numberFormat: "$#,##0",
           },
           position: {
-            startCell: "A52",
+            startCell: "A53",
             endCell: "H75",
             left: 0,
             top: 400,
@@ -671,6 +671,9 @@ interface ChartConfig {
     axisGroup: number | Excel.ChartAxisGroup;
     lineFormat?: {
       weight?: number;
+      color?: string;
+    };
+    fillFormat?: {
       color?: string;
     };
   }>;
@@ -763,6 +766,17 @@ async function createComboChart(
             }
           }
           series.axisGroup = axisGroupValue as number;
+        }
+
+        // Apply fill formatting if it's a column chart
+        if (seriesCfg.chartType === Excel.ChartType.columnClustered && seriesCfg.fillFormat) {
+          try {
+            if (seriesCfg.fillFormat.color) {
+              series.format.fill.color = seriesCfg.fillFormat.color;
+            }
+          } catch (e) {
+            // Formatting may fail, continue
+          }
         }
 
         // Apply line formatting if it's a line chart
