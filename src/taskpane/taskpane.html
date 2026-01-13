@@ -24,14 +24,21 @@
 
   <body class="ms-font-m ms-welcome ms-Fabric">
     <header class="ms-welcome__header ms-bgColor-neutralLighter">
-      <img
-        width="90"
-        height="90"
-        src="../../assets/logo-filled.png"
-        alt="Excel SFT Dashboard"
-        title="Excel SFT Dashboard"
-      />
-      <h1 class="ms-font-su">Excel SFT Dashboard</h1>
+      <div
+        style="
+          width: 90px;
+          height: 90px;
+          background: linear-gradient(135deg, #0078d7 0%, #106ebe 100%);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        "
+      >
+        <i class="ms-Icon ms-Icon--BarChart4" style="font-size: 48px; color: white"></i>
+      </div>
+      <h1 class="ms-font-su">Excel Dashboard Builder</h1>
     </header>
     <section id="sideload-msg" class="ms-welcome__main">
       <h2 class="ms-font-xl">
@@ -45,27 +52,19 @@
       </h2>
     </section>
     <main id="app-body" class="ms-welcome__main" style="display: none">
-      <h2 class="ms-font-xl">Build SFT Dashboard</h2>
-      <p class="ms-font-m">This add-in will create:</p>
-      <ul class="ms-List ms-welcome__features">
-        <li class="ms-ListItem">
-          <i class="ms-Icon ms-Icon--Table ms-font-xl"></i>
-          <span class="ms-font-m">Raw Data sheet with 186 rows of sample data</span>
-        </li>
-        <li class="ms-ListItem">
-          <i class="ms-Icon ms-Icon--BarChart4 ms-font-xl"></i>
-          <span class="ms-font-m">Dashboard sheet with formulas and charts</span>
-        </li>
-        <li class="ms-ListItem">
-          <i class="ms-Icon ms-Icon--Chart ms-font-xl"></i>
-          <span class="ms-font-m">Quarterly margin trends chart</span>
-        </li>
-      </ul>
-      <p class="ms-font-l">Click <b>Build Dashboard</b> to generate the dashboard.</p>
+      <div style="width: 100%; padding: 20px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px">
+        <h3 class="ms-font-l" style="margin-top: 0; color: #323130">Quick Start</h3>
+        <ol class="ms-font-m" style="margin: 10px 0; padding-left: 20px; color: #605e5c">
+          <li>Click <b>Build Dashboard</b> to generate the dashboard</li>
+          <li>The add-in creates a <b>Raw Data</b> sheet with sample data</li>
+          <li>A <b>Dashboard</b> sheet is generated with formulas and charts</li>
+          <li>Charts and data update automatically based on the raw data</li>
+        </ol>
+      </div>
       <div role="button" id="build-dashboard" class="ms-welcome__action ms-Button ms-Button--hero ms-font-xl">
         <span class="ms-Button-label">Build Dashboard</span>
       </div>
-      <div id="status" style="margin-top: 20px"></div>
+      <div id="status" style="margin-top: 20px; width: 100%"></div>
     </main>
   </body>
 </html>

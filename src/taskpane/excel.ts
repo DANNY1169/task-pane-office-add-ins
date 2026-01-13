@@ -364,6 +364,12 @@ async function runBuild(): Promise<void> {
       ];
       dashSheet.getRange("A44:A51").values = chartQuarters;
 
+      const q1MergeRange = dashSheet.getRange("A44:F44");
+      q1MergeRange.merge(true);
+      q1MergeRange.format.font.italic = true;
+      q1MergeRange.format.font.color = "#707070";
+      await context.sync();
+
       const chartFormulas: string[][] = [];
       for (let i = 0; i < 8; i++) {
         const row = 44 + i;
@@ -695,17 +701,7 @@ function showStatus(message: string, isError: boolean): void {
     return;
   }
 
-  const existingMessages = statusDiv.querySelectorAll(".status-card");
-  const maxMessages = 100;
-
-  if (existingMessages.length >= maxMessages) {
-    const messagesToRemove = existingMessages.length - maxMessages + 1;
-    for (let i = 0; i < messagesToRemove; i++) {
-      if (existingMessages[i].parentNode) {
-        existingMessages[i].parentNode!.removeChild(existingMessages[i]);
-      }
-    }
-  }
+  statusDiv.innerHTML = "";
 
   const statusCard = document.createElement("div");
   statusCard.className = `status-card ${isError ? "error-msg" : "success-msg"}`;
@@ -716,6 +712,4 @@ function showStatus(message: string, isError: boolean): void {
   p.style.wordBreak = "break-word";
   statusCard.appendChild(p);
   statusDiv.appendChild(statusCard);
-
-  statusDiv.scrollTop = statusDiv.scrollHeight;
 }
