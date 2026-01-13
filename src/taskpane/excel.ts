@@ -14,10 +14,6 @@ Office.onReady((info) => {
     } else {
       showStatus("Error: Build button not found in HTML", true);
     }
-
-    setTimeout(() => {
-      runBuild();
-    }, 500);
   } else {
     showStatus(`Warning: This add-in is designed for Excel. Current host: ${info.host}`, true);
   }
