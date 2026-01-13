@@ -61,6 +61,8 @@ async function runBuild(): Promise<void> {
           headerRangeFull.values = rawHeaders;
           headerRangeFull.format.font.bold = true;
           headerRangeFull.format.fill.color = "#D9E1F2";
+          headerRangeFull.format.wrapText = true;
+          headerRangeFull.format.horizontalAlignment = Excel.HorizontalAlignment.center;
           await context.sync();
 
           const sampleData = generateRawData(186);
@@ -69,6 +71,9 @@ async function runBuild(): Promise<void> {
 
           (rawSheet.getRange("B2:B187").numberFormat as any) = "0";
           (rawSheet.getRange("E2:G187").numberFormat as any) = "$#,##0";
+          await context.sync();
+
+          (rawSheet.getUsedRange().format as any).autofitColumns();
           await context.sync();
         }
       } catch (error) {
@@ -106,6 +111,7 @@ async function runBuild(): Promise<void> {
         ];
         instructionsCell.format.font.italic = true;
         instructionsCell.format.font.size = 11;
+        instructionsCell.format.font.color = "#7F7F7F";
         instructionsCell.format.font.name = "Calibri";
         await context.sync();
         try {
@@ -126,19 +132,6 @@ async function runBuild(): Promise<void> {
         summaryCell.format.font.size = 12;
         summaryCell.format.font.name = "Calibri";
         await context.sync();
-        try {
-          const summaryRange = dashSheet.getRange("A5:B5");
-          summaryRange.merge(true);
-          await context.sync();
-        } catch (mergeError) {
-          try {
-            const summaryRange = dashSheet.getRange("A5:B5");
-            summaryRange.merge();
-            await context.sync();
-          } catch (mergeError2) {}
-        }
-
-        await context.sync();
 
         const dashHeaders = [
           [
@@ -151,11 +144,17 @@ async function runBuild(): Promise<void> {
             "Margin Health",
           ],
         ];
+
+        (dashSheet.getRange("7:7").format as any).autofitRows();
+        await context.sync();
+
         const dashHeaderRange = dashSheet.getRange("A7:G7");
         dashHeaderRange.values = dashHeaders;
         dashHeaderRange.format.font.bold = true;
         dashHeaderRange.format.font.name = "Calibri";
         dashHeaderRange.format.fill.color = "#D9E1F2";
+        dashHeaderRange.format.wrapText = true;
+        dashHeaderRange.format.horizontalAlignment = Excel.HorizontalAlignment.center;
         await context.sync();
 
         const products = ["Widget Pro", "Widget Standard", "Service Package", "Accessory Kit"];
@@ -350,6 +349,7 @@ async function runBuild(): Promise<void> {
       chartHeaderRange.values = chartHeaders;
       chartHeaderRange.format.font.bold = true;
       chartHeaderRange.format.fill.color = "#D9E1F2";
+      chartHeaderRange.format.horizontalAlignment = Excel.HorizontalAlignment.center;
       await context.sync();
 
       const chartQuarters = [
@@ -380,6 +380,9 @@ async function runBuild(): Promise<void> {
       (dashSheet.getRange("F44:F51").numberFormat as any) = "$#,##0";
       await context.sync();
 
+      (dashSheet.getUsedRange().format as any).autofitColumns();
+      await context.sync();
+
       try {
         dashSheet.charts.load("items");
         await context.sync();
@@ -397,7 +400,7 @@ async function runBuild(): Promise<void> {
               chartType: Excel.ChartType.columnClustered,
               axisGroup: typeof Excel.ChartAxisGroup !== "undefined" ? Excel.ChartAxisGroup.primary : 0,
               fillFormat: {
-                color: "#1F4E78",
+                color: "#4F81BD",
               },
             },
             {
@@ -426,7 +429,7 @@ async function runBuild(): Promise<void> {
               axisGroup: 1,
               lineFormat: {
                 weight: 3,
-                color: "#0070C0",
+                color: "#4BACC6",
               },
             },
           ],
@@ -561,17 +564,7 @@ async function createComboChart(
     const chart = sheet.charts.add(baseChartType, dataRange, Excel.ChartSeriesBy.columns);
     chart.name = config.chartName || "ComboChart";
     chart.title.text = config.title || "";
-    chart.title.format.font.bold = true;
     chart.title.format.font.size = 14;
-    chart.legend.visible = true;
-    chart.legend.position = Excel.ChartLegendPosition.bottom;
-    chart.legend.overlay = false;
-
-    if (config.position && config.position.startCell && config.position.endCell) {
-      try {
-        chart.setPosition(config.position.startCell, config.position.endCell);
-      } catch (earlyPosError) {}
-    }
 
     await context.sync();
 
@@ -596,33 +589,26 @@ async function createComboChart(
           series.chartType = seriesCfg.chartType;
         }
         if (seriesCfg.axisGroup !== undefined && seriesCfg.axisGroup !== null) {
-          let axisGroupValue: number | Excel.ChartAxisGroup | string = seriesCfg.axisGroup;
+          let axisGroupValue: number | Excel.ChartAxisGroup = seriesCfg.axisGroup;
           if (typeof axisGroupValue === "string") {
-            if (axisGroupValue === "Secondary" || axisGroupValue === "secondary") {
-              axisGroupValue = 1;
-            } else if (axisGroupValue === "Primary" || axisGroupValue === "primary") {
-              axisGroupValue = 0;
-            }
-          } else if (
-            typeof Excel.ChartAxisGroup !== "undefined" &&
-            typeof axisGroupValue !== "string" &&
-            typeof axisGroupValue !== "number"
-          ) {
-          } else if (typeof axisGroupValue === "number") {
+            axisGroupValue = axisGroupValue.toLowerCase() === "secondary" ? 1 : 0;
           }
           (series.axisGroup as any) = axisGroupValue;
         }
+      }
+      await context.sync();
 
-        if (seriesCfg.chartType === Excel.ChartType.columnClustered && seriesCfg.fillFormat) {
+      for (let i = 0; i < seriesCount && i < config.seriesConfig.length; i++) {
+        const series = chart.series.getItemAt(i);
+        const seriesCfg = config.seriesConfig[i];
+
+        if (
+          seriesCfg.chartType === Excel.ChartType.columnClustered &&
+          seriesCfg.fillFormat &&
+          seriesCfg.fillFormat.color
+        ) {
           try {
-            if (seriesCfg.fillFormat.color) {
-              const fill = series.format.fill as any;
-              if (fill.solid) {
-                fill.solid();
-              }
-              fill.color = seriesCfg.fillFormat.color;
-              await context.sync();
-            }
+            (series.format.fill as any).setSolidColor(seriesCfg.fillFormat.color);
           } catch (e) {}
         }
         if (seriesCfg.chartType === Excel.ChartType.line && seriesCfg.lineFormat) {
@@ -638,12 +624,16 @@ async function createComboChart(
       }
       await context.sync();
     }
+
+    chart.legend.visible = true;
+    chart.legend.position = Excel.ChartLegendPosition.bottom;
+    chart.legend.overlay = false;
+    await context.sync();
     if (config.primaryAxis) {
       try {
         const primaryAxis = chart.axes.valueAxis;
         if (config.primaryAxis.title) {
           primaryAxis.title.text = config.primaryAxis.title;
-          primaryAxis.title.format.font.bold = true;
           primaryAxis.title.format.font.size = 11;
         }
         await context.sync();
@@ -653,31 +643,26 @@ async function createComboChart(
       try {
         await context.sync();
         let secondaryAxis: Excel.ChartAxis | null = null;
-
         try {
           if (typeof Excel.ChartAxisType !== "undefined" && typeof Excel.ChartAxisGroup !== "undefined") {
             secondaryAxis = chart.axes.getItem(Excel.ChartAxisType.value, Excel.ChartAxisGroup.secondary);
-            await context.sync();
           } else if (typeof Excel.ChartAxisType !== "undefined") {
             secondaryAxis = chart.axes.getItem(Excel.ChartAxisType.value, "Secondary");
-            await context.sync();
           }
-        } catch (e1) {}
+          await context.sync();
+        } catch (e) {}
 
         if (secondaryAxis) {
           secondaryAxis.visible = true;
           if (config.secondaryAxis.title) {
             secondaryAxis.title.text = config.secondaryAxis.title;
-            secondaryAxis.title.format.font.bold = true;
             secondaryAxis.title.format.font.size = 11;
           }
           if (config.secondaryAxis.numberFormat) {
             try {
               secondaryAxis.numberFormat = config.secondaryAxis.numberFormat;
             } catch (nfError) {
-              try {
-                (secondaryAxis as any).format.code = config.secondaryAxis.numberFormat;
-              } catch (codeError) {}
+              (secondaryAxis as any).format.code = config.secondaryAxis.numberFormat;
             }
           }
           await context.sync();
@@ -688,15 +673,14 @@ async function createComboChart(
       try {
         if (config.position.startCell && config.position.endCell) {
           chart.setPosition(config.position.startCell, config.position.endCell);
-          await context.sync();
         } else if (config.position.left !== undefined || config.position.top !== undefined) {
           chart.left = config.position.left || 0;
           chart.top = config.position.top || 0;
           chart.width = config.position.width || 700;
           chart.height = config.position.height || 400;
-          await context.sync();
         }
-      } catch (positionError) {}
+        await context.sync();
+      } catch (e) {}
     }
 
     return chart;
